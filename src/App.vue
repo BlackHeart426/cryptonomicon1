@@ -1,7 +1,13 @@
 <template>
   <div class="container mx-auto flex flex-col items-center bg-gray-100 p-4">
+    <div v-if="loading" class="fixed w-100 h-100 opacity-80 bg-purple-800 inset-0 z-50 flex items-center justify-center">
+      <svg class="animate-spin -ml-1 mr-3 h-12 w-12 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </div>
+
     <div class="container">
-      <div class="w-full my-4"></div>
       <section>
         <div class="flex">
           <div class="max-w-xs">
@@ -19,9 +25,15 @@
                 placeholder="Например DOGE"
               />
             </div>
-            <div v-if="!valid" style="color: red">
-              Такой тикер уже есть
+            <div v-if="hasTips" class="flex bg-white shadow-md p-1 rounded-md shadow-md flex-wrap">
+              <span v-for="tip in tips" :key="tip.Symbol"
+                    @click="addTicket(tip)"
+                    class="inline-flex items-center px-2 m-1 rounded-md text-xs font-medium bg-gray-300 text-gray-800 cursor-pointer">
+                {{ tip.Symbol }}
+              </span>
             </div>
+
+            <div v-if="!valid" class="text-sm text-red-600">Такой тикер уже добавлен</div>
           </div>
         </div>
         <button
@@ -45,7 +57,6 @@
           Добавить
         </button>
       </section>
-
       <template v-if="tickers.length">
         <hr class="w-full border-t border-gray-600 my-4" />
         <div>
@@ -177,10 +188,16 @@ export default {
       ticker: "",
       filter: "",
 
+      ticketDataList: [],
+
       tickers: [],
       selectedTicker: null,
 
+      tips: [],
+
+      loading: false,
       valid: true,
+      hasTips: false,
 
       graph: [],
 
@@ -189,6 +206,17 @@ export default {
   },
 
   created() {
+    // todo перепистаь
+    this.loading = true
+    // this.ticketDataList = loadTicketList();
+    fetch('https://min-api.cryptocompare.com/data/all/coinlist?summary=true')
+        .then(r => r.json())
+        .then((r) => {
+          const rawData = r.Data;
+          this.ticketDataList = Object.values(rawData).map(t => { return  {'FullName': t.FullName, 'Symbol': t.Symbol}});
+        })
+    .finally(() => this.loading = false)
+
     const windowData = Object.fromEntries(
       new URL(window.location).searchParams.entries()
     );
@@ -219,8 +247,6 @@ export default {
         );
       });
     }
-
-    setInterval(this.updateTickers, 5000);
   },
 
   computed: {
@@ -284,12 +310,27 @@ export default {
       return price > 1 ? price.toFixed(2) : price.toPrecision(2);
     },
 
+    // todo перепистаь
+    addTicket(t) {
+      this.ticker = t.Symbol
+
+      if (this.tickers.find(t => t.name === this.ticker)) {
+        this.valid = false;
+        return;
+      } else {
+        this.add()
+        this.valid = true;
+      }
+
+    },
+
     add() {
       const currentTicker = {
         name: this.ticker,
         price: "-"
       };
 
+      // todo перепистаь
       if (this.tickers.find(t => t.name === this.ticker)) {
         this.valid = false;
         return;
@@ -325,6 +366,7 @@ export default {
     },
 
     tickers(newValue, oldValue) {
+
       // Почему не сработал watch при добавлении?
       console.log(newValue === oldValue);
       localStorage.setItem("cryptonomicon-list", JSON.stringify(this.tickers));
@@ -334,6 +376,28 @@ export default {
       if (this.paginatedTickers.length === 0 && this.page > 1) {
         this.page -= 1;
       }
+    },
+
+    // todo пеерписать
+    ticker(newValue) {
+
+      this.tips = []
+
+      if (newValue.length === 0) {
+        this.hasTips = false
+      } else {
+        this.hasTips = true
+      }
+      this.ticketDataList.forEach(t => {
+        if (t.FullName.includes(newValue)) {
+
+          if(this.tips.length > 4) {
+            return;
+          }
+
+          this.tips = [...this.tips, t]
+        }
+      })
     },
 
     filter() {
