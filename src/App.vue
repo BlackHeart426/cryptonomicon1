@@ -19,6 +19,9 @@
                 placeholder="Например DOGE"
               />
             </div>
+            <div v-if="!valid" style="color: red">
+              Такой тикер уже есть
+            </div>
           </div>
         </div>
         <button
@@ -177,6 +180,8 @@ export default {
       tickers: [],
       selectedTicker: null,
 
+      valid: true,
+
       graph: [],
 
       page: 1
@@ -284,6 +289,13 @@ export default {
         name: this.ticker,
         price: "-"
       };
+
+      if (this.tickers.find(t => t.name === this.ticker)) {
+        this.valid = false;
+        return;
+      } else {
+        this.valid = true;
+      }
 
       this.tickers = [...this.tickers, currentTicker];
       this.ticker = "";

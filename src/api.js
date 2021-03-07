@@ -16,6 +16,7 @@ socket.addEventListener("message", e => {
     return;
   }
 
+  // todo непонятно
   const handlers = tickersHandlers.get(currency) ?? [];
   handlers.forEach(fn => fn(newPrice));
 });
