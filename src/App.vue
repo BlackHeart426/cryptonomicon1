@@ -178,7 +178,7 @@
 // [x] График сломан если везде одинаковые значения
 // [x] При удалении тикера остается выбор
 
-import { subscribeToTicker, unsubscribeFromTicker } from "./api";
+import { subscribeToTicker, unsubscribeFromTicker, loadTicketList } from "./api";
 
 export default {
   name: "App",
@@ -206,16 +206,7 @@ export default {
   },
 
   created() {
-    // todo перепистаь
-    this.loading = true
-    // this.ticketDataList = loadTicketList();
-    fetch('https://min-api.cryptocompare.com/data/all/coinlist?summary=true')
-        .then(r => r.json())
-        .then((r) => {
-          const rawData = r.Data;
-          this.ticketDataList = Object.values(rawData).map(t => { return  {'FullName': t.FullName, 'Symbol': t.Symbol}});
-        })
-    .finally(() => this.loading = false)
+    this.handleLoadTicketList()
 
     const windowData = Object.fromEntries(
       new URL(window.location).searchParams.entries()
@@ -292,6 +283,16 @@ export default {
   },
 
   methods: {
+
+    handleLoadTicketList() {
+
+      this.loading = true
+
+      loadTicketList()
+        .then(r =>  this.ticketDataList = r)
+        .finally(() => this.loading = false)
+    },
+
     updateTicker(tickerName, price) {
       this.tickers
         .filter(t => t.name === tickerName)

@@ -63,12 +63,12 @@ export const unsubscribeFromTicker = ticker => {
   unsubscribeFromTickerOnWs(ticker);
 };
 
-export const loadTicketList = () => {
+export function loadTicketList(){
 
-  fetch('https://min-api.cryptocompare.com/data/all/coinlist?summary=true')
+  return fetch('https://min-api.cryptocompare.com/data/all/coinlist?summary=true')
       .then(r => r.json())
       .then((r) => {
-        return r
+        const rawData = r.Data;
+        return Object.values(rawData).map(t => { return  {'FullName': t.FullName, 'Symbol': t.Symbol}});
       })
-
 };
